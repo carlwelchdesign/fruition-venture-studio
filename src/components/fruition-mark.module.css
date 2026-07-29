@@ -1,0 +1,33 @@
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mark {
+  width: 30px;
+  height: 38px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-width: 3;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-transform: uppercase;
+}
+
+.label strong {
+  font-size: 0.8rem;
+  font-weight: 520;
+  letter-spacing: 0.24em;
+}
+
+.label small {
+  color: var(--gold);
+  font-size: 0.44rem;
+  letter-spacing: 0.32em;
+}

@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum IdeaStatus {
+  NEW
+  APPROVED
+  RESEARCHING
+  REVIEW_REQUIRED
+  DECIDED
+  RESEARCH_FAILED
+  ARCHIVED
+}
+
+enum ResearchRunStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AgentRole {
+  CUSTOMER_PROBLEM
+  MARKET_COMPETITION
+  PRODUCT_MVP
+  TECHNICAL_AI
+  BUSINESS_GTM
+  RISK_TRUST
+  STUDIO_SYNTHESIS
+}
+
+enum IdeaDisposition {
+  EXPLORE
+  HOLD
+  DECLINE
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  auditEvents   AuditEvent[]
+  notes         AdminNote[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Submitter {
+  id              String   @id @default(cuid())
+  normalizedEmail String   @unique
+  email           String
+  name            String
+  organization    String?
+  anonymizedAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  ideas           Idea[]
+
+  @@index([createdAt])
+}
+
+model Idea {
+  id              String           @id @default(cuid())
+  submitterId     String
+  nameSnapshot    String
+  emailSnapshot   String
+  organization    String?
+  projectStage    String
+  projectDetails  String
+  analysisConsent Boolean
+  consentedAt     DateTime
+  status          IdeaStatus       @default(NEW)
+  disposition     IdeaDisposition?
+  decidedAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  submitter       Submitter        @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  researchRuns    ResearchRun[]
+  notes           AdminNote[]
+
+  @@index([submitterId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ResearchRun {
+  id            String            @id @default(cuid())
+  ideaId        String
+  version       Int
+  status        ResearchRunStatus @default(QUEUED)
+  workflowRunId String?           @unique
+  model         String
+  startedAt     DateTime?
+  completedAt   DateTime?
+  errorMessage  String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  idea          Idea              @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  reports       AgentReport[]
+  scorecard     Scorecard?
+
+  @@unique([ideaId, version])
+  @@index([ideaId, status])
+}
+
+model AgentReport {
+  id               String           @id @default(cuid())
+  researchRunId    String
+  role             AgentRole
+  title            String
+  summary          String
+  findings         Json
+  risks            Json
+  openQuestions    Json
+  confidence       Float
+  createdAt        DateTime         @default(now())
+  researchRun      ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
+  sources          ResearchSource[]
+
+  @@unique([researchRunId, role])
+}
+
+model ResearchSource {
+  id            String      @id @default(cuid())
+  agentReportId String
+  url           String
+  title         String
+  snippet       String?
+  publishedAt   DateTime?
+  accessedAt    DateTime    @default(now())
+  agentReport   AgentReport @relation(fields: [agentReportId], references: [id], onDelete: Cascade)
+
+  @@unique([agentReportId, url])
+}
+
+model Scorecard {
+  id              String           @id @default(cuid())
+  researchRunId   String           @unique
+  totalScore      Float
+  recommendation IdeaDisposition
+  confidence      Float
+  summary         String
+  nextSteps       Json
+  createdAt       DateTime         @default(now())
+  researchRun     ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
+  dimensions      ScoreDimension[]
+}
+
+model ScoreDimension {
+  id              String    @id @default(cuid())
+  scorecardId     String
+  key             String
+  label           String
+  weight          Float
+  aiScore         Float
+  aiRationale     String
+  confidence      Float
+  evidence        Json
+  overrideScore   Float?
+  overrideReason  String?
+  overriddenAt    DateTime?
+  scorecard       Scorecard @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+
+  @@unique([scorecardId, key])
+}
+
+model AdminNote {
+  id        String   @id @default(cuid())
+  ideaId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([ideaId, createdAt])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  reason      String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+}
