@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 import styles from "@/app/admin.module.css";
+import { adminSignInEndpoint } from "@/lib/admin-routes";
 
 type SignInState = {
   status: "idle" | "submitting" | "success" | "error";
@@ -29,7 +30,7 @@ export function AdminSignInForm({ defaultEmail }: { defaultEmail: string }) {
     setState({ status: "submitting", message: "Creating secure link…" });
 
     try {
-      const response = await fetch("/api/sign-in", {
+      const response = await fetch(adminSignInEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
