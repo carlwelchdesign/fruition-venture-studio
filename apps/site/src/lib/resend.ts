@@ -9,7 +9,7 @@ type EmailMessage = {
 
 export async function sendEmail(message: EmailMessage) {
   const apiKey =
-    process.env.PUBLIC_RESEND_API_KEY ?? process.env.RESEND_API_KEY;
+    process.env.SITE_RESEND_API_KEY ?? process.env.RESEND_API_KEY;
   const from = process.env.CONTACT_FROM_EMAIL;
 
   if (!apiKey || !from) {

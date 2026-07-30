@@ -82,7 +82,7 @@ Connect this GitHub repository to two projects:
 
 | Project | Root directory | Production-only secrets |
 | --- | --- | --- |
-| Public site | `apps/site` | `INTAKE_DATABASE_URL`, intake HMAC secret, public Resend key |
+| Public site | `apps/site` | `INTAKE_DATABASE_URL`, intake HMAC secret, site-only Resend key |
 | Private admin | `apps/admin` | Admin database URLs, auth secrets, admin allowlist, admin Resend key, OpenAI key |
 
 The existing `fruition-venture-studio` project should become the public site
