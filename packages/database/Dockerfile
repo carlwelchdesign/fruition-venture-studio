@@ -12,3 +12,4 @@ COPY packages/database/package.json packages/database/package.json
 RUN npm ci --ignore-scripts
 COPY packages/database packages/database
 RUN npm run db:generate
+USER node
