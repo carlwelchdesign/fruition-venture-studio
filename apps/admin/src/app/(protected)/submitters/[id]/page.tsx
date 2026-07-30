@@ -7,6 +7,7 @@ import {
   mergeSubmitterAction,
 } from "../../../actions";
 import styles from "../../../admin.module.css";
+import { submitterExportEndpoint } from "@/lib/admin-routes";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
@@ -58,7 +59,7 @@ export default async function SubmitterPage({
         </div>
         <a
           className={styles.exportLink}
-          href={`/api/submitters/${submitter.id}/export`}
+          href={submitterExportEndpoint(submitter.id)}
         >
           Export record
         </a>
