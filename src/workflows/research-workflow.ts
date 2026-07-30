@@ -1,6 +1,7 @@
 import type {
   IdeaResearchContext,
 } from "@/agents/research-team";
+import { describeResearchError } from "@/agents/research-errors";
 import { specialistDefinitions } from "@/agents/research-config";
 import { buildScorecard } from "@/agents/scorecard";
 import type { SpecialistReport } from "@/agents/research-schemas";
@@ -204,8 +205,7 @@ export async function researchIdeaWorkflow(researchRunId: string) {
     const synthesis = await runSynthesisStep(context, completed);
     await persistSynthesis(researchRunId, synthesis);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown research failure";
+    const message = describeResearchError(error);
     await markResearchFailed(researchRunId, message);
     throw error;
   }

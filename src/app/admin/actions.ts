@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-session";
+import { describeResearchError } from "@/agents/research-errors";
 import { researchIdeaWorkflow } from "@/workflows/research-workflow";
 
 function stringValue(formData: FormData, key: string) {
@@ -77,8 +78,7 @@ export async function approveAndResearchAction(formData: FormData) {
       data: { workflowRunId: workflow.runId },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Workflow could not start.";
+    const message = describeResearchError(error);
     await prisma.researchRun.update({
       where: { id: researchRun.id },
       data: {

@@ -4,6 +4,7 @@ import {
   synthesisSchema,
   type ResearchSynthesis,
   type SpecialistReport,
+  validateSpecialistReportUrls,
 } from "@/agents/research-schemas";
 import type { SpecialistDefinition } from "@/agents/research-config";
 
@@ -67,7 +68,7 @@ export async function runSpecialist(
     throw new Error(`${definition.name} did not return a report.`);
   }
 
-  return result.finalOutput;
+  return validateSpecialistReportUrls(result.finalOutput);
 }
 
 export async function runSynthesis(
