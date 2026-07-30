@@ -4,37 +4,42 @@ export const scoreDefinitions = [
   {
     key: "problem_strength",
     label: "Problem strength and customer urgency",
-    weight: 15,
+    weight: 13,
   },
   {
     key: "founder_advantage",
     label: "Founder or domain advantage",
-    weight: 15,
+    weight: 12,
   },
   {
     key: "market_opportunity",
     label: "Market evidence and opportunity",
-    weight: 15,
+    weight: 14,
   },
   {
     key: "differentiation",
     label: "Differentiation and defensibility",
-    weight: 15,
+    weight: 13,
   },
   {
     key: "technical_feasibility",
     label: "Technical feasibility and architecture risk",
-    weight: 15,
+    weight: 13,
   },
   {
     key: "revenue_path",
     label: "Revenue model and path to market",
-    weight: 15,
+    weight: 14,
+  },
+  {
+    key: "financial_viability",
+    label: "Venture economics and capital efficiency",
+    weight: 13,
   },
   {
     key: "studio_fit",
     label: "Fruition studio fit and shared-upside potential",
-    weight: 10,
+    weight: 8,
   },
 ] as const;
 

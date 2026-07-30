@@ -48,15 +48,15 @@ function statusCopy(run: ResearchRunSnapshot) {
     return {
       eyebrow: "Commission accepted",
       title: "Preparing the research team.",
-      body: "The six specialist briefs are queued and will begin automatically.",
+      body: "The seven specialist briefs are queued and will begin automatically.",
     };
   }
 
   if (phase === "researching") {
     return {
       eyebrow: "Research in progress",
-      title: "Six specialists are working in parallel.",
-      body: "Customer, market, product, technical, business, and risk evidence is being gathered from public sources.",
+      title: "Seven specialists are working in parallel.",
+      body: "Customer, market, product, technical, business, financial, and risk evidence is being gathered from public sources.",
     };
   }
 
@@ -301,7 +301,7 @@ export function ResearchCommission({
           <span className={styles.researchEmptyRule} />
           <h3>Ready when you are.</h3>
           <p>
-            Authorizing research commissions six specialists and one final
+            Authorizing research commissions seven specialists and one final
             evaluator. Results remain advisory and private to the studio.
           </p>
         </div>

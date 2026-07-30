@@ -4,12 +4,12 @@ import type {
 import { describeResearchError } from "@/agents/research-errors";
 import { specialistDefinitions } from "@/agents/research-config";
 import { buildScorecard } from "@/agents/scorecard";
-import type { SpecialistReport } from "@/agents/research-schemas";
+import type { ResearchSpecialistReport } from "@/agents/research-schemas";
 import { prisma } from "@fruition/database";
 
 type CompletedSpecialist = {
   role: (typeof specialistDefinitions)[number]["role"];
-  report: SpecialistReport;
+  report: ResearchSpecialistReport;
 };
 
 async function loadResearchContext(researchRunId: string) {
@@ -70,6 +70,8 @@ async function persistSpecialistReports(
           findings: report.findings,
           risks: report.risks,
           openQuestions: report.openQuestions,
+          structuredData:
+            "financials" in report ? report.financials : undefined,
           confidence: report.confidence,
           sources: {
             create: report.sources.map((source) => ({
@@ -88,6 +90,8 @@ async function persistSpecialistReports(
           findings: report.findings,
           risks: report.risks,
           openQuestions: report.openQuestions,
+          structuredData:
+            "financials" in report ? report.financials : undefined,
           confidence: report.confidence,
           sources: {
             deleteMany: {},

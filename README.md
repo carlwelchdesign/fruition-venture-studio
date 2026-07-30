@@ -116,8 +116,9 @@ must not retain valid credentials.
    capability.
 2. Normalized email groups repeat ideas under one submitter profile.
 3. The owner signs into the separate admin and explicitly approves research.
-4. Six bounded specialists collect public-source evidence.
-5. A seventh agent synthesizes a cited, versioned scorecard.
+4. Seven bounded specialists collect public-source evidence, including a
+   structured market-economics and venture-finance assessment.
+5. An eighth agent synthesizes a cited, versioned scorecard.
 6. The owner records the disposition and may override scores with a required
    reason.
 

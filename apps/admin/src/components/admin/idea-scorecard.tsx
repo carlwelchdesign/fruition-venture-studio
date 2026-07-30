@@ -1,5 +1,6 @@
 import type { Prisma } from "@fruition/database";
 import { overrideScoreAction } from "@/app/actions";
+import { ScoreProfileChart } from "@/components/admin/score-profile-chart";
 import styles from "@/app/admin.module.css";
 
 type Dimension = {
@@ -62,6 +63,12 @@ export function IdeaScorecard({
         </div>
       </div>
       <p className={styles.scoreSummary}>{scorecard.summary}</p>
+      <ScoreProfileChart
+        dimensions={scorecard.dimensions.map((dimension) => ({
+          label: dimension.label,
+          score: dimension.overrideScore ?? dimension.aiScore,
+        }))}
+      />
       <div className={styles.scoreDimensions}>
         {scorecard.dimensions.map((dimension) => {
           const effective = dimension.overrideScore ?? dimension.aiScore;

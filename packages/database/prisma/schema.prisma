@@ -30,6 +30,7 @@ enum AgentRole {
   PRODUCT_MVP
   TECHNICAL_AI
   BUSINESS_GTM
+  MARKET_FINANCE
   RISK_TRUST
   STUDIO_SYNTHESIS
 }
@@ -169,6 +170,7 @@ model AgentReport {
   findings         Json
   risks            Json
   openQuestions    Json
+  structuredData   Json?
   confidence       Float
   createdAt        DateTime         @default(now())
   researchRun      ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)

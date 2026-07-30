@@ -14,10 +14,10 @@ describe("research progress", () => {
     expect(getResearchPhase({ status: "RUNNING", reportCount: 0 })).toBe(
       "researching",
     );
-    expect(getResearchPhase({ status: "RUNNING", reportCount: 6 })).toBe(
+    expect(getResearchPhase({ status: "RUNNING", reportCount: 7 })).toBe(
       "synthesizing",
     );
-    expect(getResearchPhase({ status: "COMPLETED", reportCount: 6 })).toBe(
+    expect(getResearchPhase({ status: "COMPLETED", reportCount: 7 })).toBe(
       "ready",
     );
     expect(getResearchPhase({ status: "FAILED", reportCount: 0 })).toBe(

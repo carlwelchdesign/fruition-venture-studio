@@ -5,6 +5,7 @@ export type SpecialistDefinition = {
     | "PRODUCT_MVP"
     | "TECHNICAL_AI"
     | "BUSINESS_GTM"
+    | "MARKET_FINANCE"
     | "RISK_TRUST";
   name: string;
   focus: string;
@@ -40,6 +41,12 @@ export const specialistDefinitions: SpecialistDefinition[] = [
     name: "Business Model and Go-to-Market Researcher",
     focus:
       "Evaluate buyer, pricing logic, revenue path, distribution options, sales friction, capital needs, and early commercial experiments.",
+  },
+  {
+    role: "MARKET_FINANCE",
+    name: "Market Economics and Venture Finance Researcher",
+    focus:
+      "Build a transparent, assumption-led venture model. Research market sizing evidence, pricing benchmarks, unit economics, cost structure, capital requirements, and conservative, base, and upside three-year scenarios. Never invent missing values: use null, identify the evidence gap, and keep sourced facts distinct from estimates.",
   },
   {
     role: "RISK_TRUST",
