@@ -76,6 +76,21 @@ psql "$DIRECT_URL" \
 Use the resulting `fruition_intake` connection only as
 `INTAKE_DATABASE_URL` in the public Vercel project.
 
+Production owner credentials belong only in the repository secrets
+`MIGRATION_DATABASE_URL` and `INTAKE_DB_PASSWORD`. Run the
+**Migrate production database** GitHub workflow for future schema changes.
+Neither Vercel application receives the migration credential.
+
+The admin deployment uses a separate `fruition_admin_runtime` login with
+table and sequence data privileges but no database-owner or role-management
+capability. Reprovision it with:
+
+```bash
+psql "$MIGRATION_DATABASE_URL" \
+  -v runtime_password="$ADMIN_RUNTIME_DB_PASSWORD" \
+  -f packages/database/prisma/provision-admin-runtime.sql
+```
+
 ## Vercel projects
 
 Connect this GitHub repository to two projects:
