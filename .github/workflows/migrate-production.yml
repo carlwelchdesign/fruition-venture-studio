@@ -1,0 +1,41 @@
+name: Migrate production database
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-database-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      DIRECT_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+      INTAKE_DB_PASSWORD: ${{ secrets.INTAKE_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run db:generate
+
+      - name: Apply additive Prisma migrations
+        run: npm run db:deploy
+
+      - name: Reassert the execute-only intake role
+        run: >-
+          psql "$DIRECT_URL"
+          -v intake_password="$INTAKE_DB_PASSWORD"
+          -f packages/database/prisma/provision-intake-role.sql
