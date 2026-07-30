@@ -22,7 +22,7 @@ describe("buildScorecard", () => {
   it("calculates the fixed weighted score out of 100", () => {
     const result = buildScorecard(synthesis(4));
     expect(result.totalScore).toBe(80);
-    expect(result.dimensions).toHaveLength(7);
+    expect(result.dimensions).toHaveLength(8);
   });
 
   it("rejects duplicate or missing dimensions", () => {

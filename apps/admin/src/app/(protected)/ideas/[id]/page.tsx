@@ -4,6 +4,8 @@ import { IdeaReports } from "@/components/admin/idea-reports";
 import { ResearchCommission } from "@/components/admin/research-commission";
 import { IdeaScorecard } from "@/components/admin/idea-scorecard";
 import { IdeaSidebar } from "@/components/admin/idea-sidebar";
+import { VentureFinanceAnalysis } from "@/components/admin/venture-finance-analysis";
+import { ventureFinancialsSchema } from "@/agents/research-schemas";
 import { prisma } from "@fruition/database";
 import styles from "../../../admin.module.css";
 
@@ -45,6 +47,13 @@ export default async function IdeaPage({
   }
 
   const latestRun = idea.researchRuns[0];
+  const financeReport = latestRun?.reports.find(
+    (report) => report.role === "MARKET_FINANCE",
+  );
+  const financeResult = ventureFinancialsSchema.safeParse(
+    financeReport?.structuredData,
+  );
+  const financials = financeResult.success ? financeResult.data : null;
 
   return (
     <>
@@ -104,7 +113,7 @@ export default async function IdeaPage({
               <h2>Research commission</h2>
             </div>
             <p className={styles.panelIntro}>
-              Six specialists research the opportunity. A seventh agent
+              Seven specialists research the opportunity. An eighth agent
               synthesizes the evidence into a transparent studio scorecard.
               Nothing runs until you authorize it.
             </p>
@@ -135,7 +144,13 @@ export default async function IdeaPage({
               scorecard={latestRun.scorecard}
             />
           ) : null}
-          <IdeaReports reports={latestRun?.reports ?? []} />
+          {financials ? (
+            <VentureFinanceAnalysis financials={financials} />
+          ) : null}
+          <IdeaReports
+            reports={latestRun?.reports ?? []}
+            sectionNumber={financials ? "05" : "04"}
+          />
         </div>
 
         <IdeaSidebar idea={idea} />

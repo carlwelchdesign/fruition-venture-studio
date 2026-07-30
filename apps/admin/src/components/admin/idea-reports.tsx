@@ -37,7 +37,13 @@ function findings(value: Prisma.JsonValue) {
   });
 }
 
-export function IdeaReports({ reports }: { reports: Report[] }) {
+export function IdeaReports({
+  reports,
+  sectionNumber = "04",
+}: {
+  reports: Report[];
+  sectionNumber?: string;
+}) {
   if (reports.length === 0) {
     return null;
   }
@@ -45,7 +51,7 @@ export function IdeaReports({ reports }: { reports: Report[] }) {
   return (
     <section className={styles.panel}>
       <div className={styles.panelHeading}>
-        <span>04</span>
+        <span>{sectionNumber}</span>
         <h2>Specialist reports</h2>
       </div>
       <div className={styles.reportList}>
