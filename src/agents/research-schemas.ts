@@ -1,7 +1,9 @@
 import { z } from "zod";
 
+const generatedUrlSchema = z.string().min(1).max(2048);
+
 export const sourceSchema = z.object({
-  url: z.url(),
+  url: generatedUrlSchema,
   title: z.string().min(1).max(300),
   snippet: z.string().max(800),
   publishedAt: z.string().nullable(),
@@ -10,7 +12,7 @@ export const sourceSchema = z.object({
 export const findingSchema = z.object({
   claim: z.string().min(1).max(1200),
   evidence: z.string().min(1).max(1600),
-  sourceUrls: z.array(z.url()).max(8),
+  sourceUrls: z.array(generatedUrlSchema).max(8),
 });
 
 export const specialistReportSchema = z.object({
@@ -24,6 +26,37 @@ export const specialistReportSchema = z.object({
 });
 
 export type SpecialistReport = z.infer<typeof specialistReportSchema>;
+
+function assertHttpUrl(value: string, field: string) {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(`${field} must be a valid source URL.`);
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw new Error(`${field} must use http or https.`);
+  }
+}
+
+export function validateSpecialistReportUrls(report: SpecialistReport) {
+  report.sources.forEach((source, index) => {
+    assertHttpUrl(source.url, `Source ${index + 1}`);
+  });
+
+  report.findings.forEach((finding, findingIndex) => {
+    finding.sourceUrls.forEach((url, sourceIndex) => {
+      assertHttpUrl(
+        url,
+        `Finding ${findingIndex + 1}, source ${sourceIndex + 1}`,
+      );
+    });
+  });
+
+  return report;
+}
 
 export const scoreDimensionKeys = [
   "problem_strength",

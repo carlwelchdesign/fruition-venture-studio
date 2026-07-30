@@ -120,7 +120,11 @@ export default async function IdeaPage({
               <form action={approveAndResearchAction}>
                 <input type="hidden" name="ideaId" value={idea.id} />
                 <button className={styles.primaryButton} type="submit">
-                  {latestRun ? "Run new research version" : "Approve research"}
+                  {latestRun?.status === "FAILED"
+                    ? "Retry research"
+                    : latestRun
+                      ? "Run new research version"
+                      : "Approve research"}
                 </button>
               </form>
             )}
