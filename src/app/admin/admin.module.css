@@ -443,7 +443,233 @@
   background: transparent;
 }
 
-.progressNotice,
+.primaryButton:disabled {
+  border-color: #737a7e;
+  color: #d9dcdd;
+  background: #737a7e;
+  cursor: wait;
+}
+
+.researchConsole {
+  display: grid;
+  gap: 18px;
+}
+
+.researchStatus,
+.researchEmpty {
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid #bfc4c6;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 68%), transparent 52%),
+    #e7e9ea;
+}
+
+.researchStatus {
+  position: relative;
+  overflow: hidden;
+}
+
+.researchStatus::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--gold-dark);
+  content: "";
+}
+
+.researchStatusError::before {
+  background: var(--error);
+}
+
+.researchStatusHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.researchEyebrow {
+  margin-bottom: 9px;
+  color: var(--gold-dark);
+  font-size: 0.54rem;
+  font-weight: 620;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.researchStatusError .researchEyebrow {
+  color: var(--error);
+}
+
+.researchStatus h3,
+.researchEmpty h3 {
+  max-width: 620px;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  font-weight: 470;
+  letter-spacing: -0.025em;
+}
+
+.researchStatusBody,
+.researchEmpty p {
+  max-width: 720px;
+  margin-top: 13px;
+  color: var(--steel);
+  font-size: 0.73rem;
+  line-height: 1.65;
+}
+
+.liveSignal {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid #9da3a6;
+  color: var(--graphite);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.liveSignal span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold-dark);
+  animation: researchPulse 1.8s ease-in-out infinite;
+}
+
+.researchProgressTrack {
+  height: 2px;
+  margin-top: 28px;
+  overflow: hidden;
+  background: #c7cbcd;
+}
+
+.researchProgressTrack span {
+  display: block;
+  width: 10%;
+  height: 100%;
+  background: var(--gold-dark);
+  transition: width 420ms ease;
+}
+
+.researchProgressTrack[data-phase="researching"] span {
+  width: 40%;
+}
+
+.researchProgressTrack[data-phase="synthesizing"] span {
+  width: 72%;
+}
+
+.researchProgressTrack[data-phase="ready"] span {
+  width: 100%;
+}
+
+.researchPhases {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 13px;
+  list-style: none;
+}
+
+.researchPhases li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #858c90;
+  font-size: 0.56rem;
+  line-height: 1.35;
+}
+
+.researchPhases li span {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.48rem;
+}
+
+.researchPhases .researchPhaseCurrent {
+  color: var(--graphite);
+  font-weight: 620;
+}
+
+.researchPhases .researchPhaseCurrent span,
+.researchPhases .researchPhaseComplete {
+  color: var(--gold-dark);
+}
+
+.researchTelemetry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 26px;
+  padding-top: 17px;
+  border-top: 1px solid #c7cbcd;
+  color: var(--steel);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.53rem;
+  text-transform: capitalize;
+}
+
+.researchEmpty {
+  min-height: 170px;
+}
+
+.researchEmptyRule {
+  display: block;
+  width: 36px;
+  height: 1px;
+  margin-bottom: 24px;
+  background: var(--gold-dark);
+}
+
+.researchAction {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.researchAction p,
+.researchAutoUpdate,
+.researchUpdateError {
+  color: var(--steel);
+  font-size: 0.63rem;
+  line-height: 1.5;
+}
+
+.researchAutoUpdate {
+  padding-left: 14px;
+  border-left: 1px solid var(--gold-dark);
+}
+
+.researchUpdateError {
+  padding: 12px 14px;
+  border-left: 2px solid var(--error);
+  color: var(--error);
+  background: #f0e4e2;
+}
+
+.researchUpdateError a {
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@keyframes researchPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .overrideNotice {
   padding: 16px;
   border-left: 2px solid var(--gold-dark);
@@ -451,23 +677,6 @@
   background: #e7e8e9;
   font-size: 0.73rem;
   line-height: 1.5;
-}
-
-.runMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 24px;
-  margin-top: 24px;
-  color: var(--steel);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.58rem;
-  text-transform: capitalize;
-}
-
-.runMeta strong {
-  width: 100%;
-  color: var(--error);
-  font-weight: 450;
 }
 
 .scoreHero {
@@ -1063,6 +1272,21 @@
     grid-template-columns: 1fr;
   }
 
+  .researchStatusHeader,
+  .researchAction {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .researchPhases {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 12px;
+  }
+
+  .researchAction .primaryButton {
+    width: 100%;
+  }
+
   .scoreHero {
     flex-wrap: wrap;
   }
@@ -1088,5 +1312,15 @@
 
   .signInArchitecture {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveSignal span {
+    animation: none;
+  }
+
+  .researchProgressTrack span {
+    transition: none;
   }
 }

@@ -8,6 +8,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-session";
 import { describeResearchError } from "@/agents/research-errors";
+import type {
+  ResearchActionState,
+  ResearchRunSnapshot,
+} from "@/lib/research-progress";
 import { researchIdeaWorkflow } from "@/workflows/research-workflow";
 
 function stringValue(formData: FormData, key: string) {
@@ -21,17 +25,41 @@ export async function signOutAction() {
   redirect("/admin/sign-in");
 }
 
-export async function approveAndResearchAction(formData: FormData) {
-  const session = await requireAdmin();
-  const ideaId = stringValue(formData, "ideaId");
+function researchRunSnapshot(run: {
+  id: string;
+  version: number;
+  status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+  model: string;
+  errorMessage: string | null;
+  createdAt: Date;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  updatedAt: Date;
+  _count: { reports: number };
+}): ResearchRunSnapshot {
+  return {
+    id: run.id,
+    version: run.version,
+    status: run.status,
+    model: run.model,
+    reportCount: run._count.reports,
+    errorMessage: run.errorMessage,
+    createdAt: run.createdAt.toISOString(),
+    startedAt: run.startedAt?.toISOString() ?? null,
+    completedAt: run.completedAt?.toISOString() ?? null,
+    updatedAt: run.updatedAt.toISOString(),
+  };
+}
 
-  const researchRun = await prisma.$transaction(async (transaction) => {
+async function prepareResearchRun(ideaId: string, actorUserId: string) {
+  return prisma.$transaction(async (transaction) => {
     const idea = await transaction.idea.findUnique({
       where: { id: ideaId },
       include: {
         researchRuns: {
           where: { status: { in: ["QUEUED", "RUNNING"] } },
           take: 1,
+          include: { _count: { select: { reports: true } } },
         },
         _count: { select: { researchRuns: true } },
       },
@@ -51,6 +79,7 @@ export async function approveAndResearchAction(formData: FormData) {
         version: idea._count.researchRuns + 1,
         model: process.env.OPENAI_MODEL ?? "gpt-5.6-sol",
       },
+      include: { _count: { select: { reports: true } } },
     });
 
     await transaction.idea.update({
@@ -60,7 +89,7 @@ export async function approveAndResearchAction(formData: FormData) {
 
     await transaction.auditEvent.create({
       data: {
-        actorUserId: session.user.id,
+        actorUserId,
         action: "RESEARCH_APPROVED",
         entityType: "Idea",
         entityId: ideaId,
@@ -70,16 +99,44 @@ export async function approveAndResearchAction(formData: FormData) {
 
     return run;
   });
+}
+
+export async function approveAndResearchAction(
+  _previousState: ResearchActionState,
+  formData: FormData,
+): Promise<ResearchActionState> {
+  const session = await requireAdmin();
+  const ideaId = stringValue(formData, "ideaId");
+
+  let researchRun: Awaited<ReturnType<typeof prepareResearchRun>>;
+
+  try {
+    researchRun = await prepareResearchRun(ideaId, session.user.id);
+  } catch (error) {
+    return {
+      outcome: "error",
+      message: describeResearchError(error),
+      run: null,
+    };
+  }
 
   try {
     const workflow = await start(researchIdeaWorkflow, [researchRun.id]);
-    await prisma.researchRun.update({
+    const queuedRun = await prisma.researchRun.update({
       where: { id: researchRun.id },
       data: { workflowRunId: workflow.runId },
+      include: { _count: { select: { reports: true } } },
     });
+    revalidatePath(`/admin/ideas/${ideaId}`);
+    revalidatePath("/admin");
+    return {
+      outcome: "started",
+      message: "Research commissioned.",
+      run: researchRunSnapshot(queuedRun),
+    };
   } catch (error) {
     const message = describeResearchError(error);
-    await prisma.researchRun.update({
+    const failedRun = await prisma.researchRun.update({
       where: { id: researchRun.id },
       data: {
         status: "FAILED",
@@ -87,11 +144,16 @@ export async function approveAndResearchAction(formData: FormData) {
         completedAt: new Date(),
         idea: { update: { status: "RESEARCH_FAILED" } },
       },
+      include: { _count: { select: { reports: true } } },
     });
+    revalidatePath(`/admin/ideas/${ideaId}`);
+    revalidatePath("/admin");
+    return {
+      outcome: "error",
+      message,
+      run: researchRunSnapshot(failedRun),
+    };
   }
-
-  revalidatePath(`/admin/ideas/${ideaId}`);
-  revalidatePath("/admin");
 }
 
 export async function setDispositionAction(formData: FormData) {
