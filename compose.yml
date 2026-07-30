@@ -1,0 +1,113 @@
+name: fruition
+
+services:
+  database:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: fruition
+      POSTGRES_USER: fruition_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - fruition_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fruition_admin -d fruition"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/database/Dockerfile
+    environment:
+      DIRECT_URL: postgresql://fruition_admin:${POSTGRES_PASSWORD}@database:5432/fruition
+      INTAKE_DB_PASSWORD: ${INTAKE_DB_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -ec
+      - >-
+        npm run db:deploy &&
+        psql "$$DIRECT_URL"
+        -v intake_password="$$INTAKE_DB_PASSWORD"
+        -f packages/database/prisma/provision-intake-role.sql
+    restart: "no"
+
+  site:
+    build:
+      context: .
+      dockerfile: apps/site/Dockerfile
+    environment:
+      NEXT_PUBLIC_SITE_URL: ${SITE_APP_URL:-http://localhost:3000}
+      INTAKE_DATABASE_URL: postgresql://fruition_intake:${INTAKE_DB_PASSWORD}@database:5432/fruition
+      INTAKE_RATE_LIMIT_SECRET: ${INTAKE_RATE_LIMIT_SECRET}
+      PUBLIC_RESEND_API_KEY: ${PUBLIC_RESEND_API_KEY:-}
+      CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL:-}
+      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${SITE_PORT:-3000}:3000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then(r=>{if(!r.ok)process.exit(1)})",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      ADMIN_APP_URL: ${ADMIN_APP_URL:-http://localhost:3001}
+      PUBLIC_SITE_URL: ${SITE_APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql://fruition_admin:${POSTGRES_PASSWORD}@database:5432/fruition
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      AUTH_RATE_LIMIT_SECRET: ${AUTH_RATE_LIMIT_SECRET}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
+      ADMIN_RESEND_API_KEY: ${ADMIN_RESEND_API_KEY:-}
+      ADMIN_FROM_EMAIL: ${ADMIN_FROM_EMAIL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6-sol}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${ADMIN_PORT:-3001}:3001"
+    volumes:
+      - fruition_workflow:/app/.workflow-data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3001/api/health').then(r=>{if(!r.ok)process.exit(1)})",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+volumes:
+  fruition_postgres:
+  fruition_workflow:

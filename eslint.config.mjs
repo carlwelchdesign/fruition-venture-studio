@@ -9,11 +9,12 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    "apps/*/.next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "src/app/.well-known/workflow/**",
-    "src/generated/**",
+    "apps/admin/src/app/.well-known/workflow/**",
+    "packages/database/src/generated/**",
   ]),
 ]);
 
