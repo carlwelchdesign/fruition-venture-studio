@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IdeaReports } from "@/components/admin/idea-reports";
+import { ResearchCommission } from "@/components/admin/research-commission";
 import { IdeaScorecard } from "@/components/admin/idea-scorecard";
 import { IdeaSidebar } from "@/components/admin/idea-sidebar";
 import { prisma } from "@/lib/db";
-import { approveAndResearchAction } from "../../../actions";
 import styles from "../../../admin.module.css";
 
 const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
@@ -45,9 +45,6 @@ export default async function IdeaPage({
   }
 
   const latestRun = idea.researchRuns[0];
-  const hasActiveRun = idea.researchRuns.some((run) =>
-    ["QUEUED", "RUNNING"].includes(run.status),
-  );
 
   return (
     <>
@@ -111,33 +108,25 @@ export default async function IdeaPage({
               synthesizes the evidence into a transparent studio scorecard.
               Nothing runs until you authorize it.
             </p>
-            {hasActiveRun ? (
-              <div className={styles.progressNotice}>
-                Research is in progress. Refresh this page to see completed
-                reports.
-              </div>
-            ) : (
-              <form action={approveAndResearchAction}>
-                <input type="hidden" name="ideaId" value={idea.id} />
-                <button className={styles.primaryButton} type="submit">
-                  {latestRun?.status === "FAILED"
-                    ? "Retry research"
-                    : latestRun
-                      ? "Run new research version"
-                      : "Approve research"}
-                </button>
-              </form>
-            )}
-            {latestRun ? (
-              <div className={styles.runMeta}>
-                <span>Version {latestRun.version}</span>
-                <span>{latestRun.model}</span>
-                <span>{latestRun.status.toLowerCase()}</span>
-                {latestRun.errorMessage ? (
-                  <strong>{latestRun.errorMessage}</strong>
-                ) : null}
-              </div>
-            ) : null}
+            <ResearchCommission
+              ideaId={idea.id}
+              initialRun={
+                latestRun
+                  ? {
+                      id: latestRun.id,
+                      version: latestRun.version,
+                      status: latestRun.status,
+                      model: latestRun.model,
+                      reportCount: latestRun.reports.length,
+                      errorMessage: latestRun.errorMessage,
+                      createdAt: latestRun.createdAt.toISOString(),
+                      startedAt: latestRun.startedAt?.toISOString() ?? null,
+                      completedAt: latestRun.completedAt?.toISOString() ?? null,
+                      updatedAt: latestRun.updatedAt.toISOString(),
+                    }
+                  : null
+              }
+            />
           </section>
 
           {latestRun?.scorecard ? (
