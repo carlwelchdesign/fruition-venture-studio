@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { MAX_PROJECT_DETAILS_CHARACTERS } from "@fruition/contracts/contact";
 import { ArrowUpRight } from "./arrow-up-right";
 import styles from "./contact-form.module.css";
 
@@ -17,16 +18,31 @@ export function ContactForm() {
     status: "idle",
     message: "",
   });
+  const [projectDetailsLength, setProjectDetailsLength] = useState(0);
+  const projectDetailsOverLimit =
+    projectDetailsLength > MAX_PROJECT_DETAILS_CHARACTERS;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submissionInFlight.current) {
       return;
     }
-    submissionInFlight.current = true;
 
     const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
+    const projectDetails =
+      typeof values.projectDetails === "string" ? values.projectDetails : "";
+    if (projectDetails.length > MAX_PROJECT_DETAILS_CHARACTERS) {
+      setSubmission({
+        status: "error",
+        message: `Your opportunity brief is ${(
+          projectDetails.length - MAX_PROJECT_DETAILS_CHARACTERS
+        ).toLocaleString("en-US")} characters over the limit. Shorten it before sending.`,
+      });
+      return;
+    }
+
+    submissionInFlight.current = true;
 
     setSubmission({
       status: "submitting",
@@ -50,6 +66,7 @@ export function ContactForm() {
 
       const result = (await response.json()) as { message?: string };
       form.reset();
+      setProjectDetailsLength(0);
       setSubmission({
         status: "success",
         message:
@@ -119,13 +136,40 @@ export function ContactForm() {
           <span>What problem are you uniquely positioned to solve?</span>
         </label>
         <textarea
+          aria-describedby="projectDetails-guidance projectDetails-count"
+          aria-invalid={projectDetailsOverLimit}
           id="projectDetails"
           name="projectDetails"
           rows={6}
           minLength={20}
-          maxLength={2000}
+          onChange={(event) =>
+            setProjectDetailsLength(event.currentTarget.value.length)
+          }
           required
         />
+        <div className={styles.fieldMeta}>
+          <p id="projectDetails-guidance">
+            Paste a complete brief or detailed notes. Please exclude
+            confidential or proprietary information.
+          </p>
+          <p
+            className={projectDetailsOverLimit ? styles.characterLimit : ""}
+            id="projectDetails-count"
+          >
+            {projectDetailsOverLimit
+              ? `${(
+                  projectDetailsLength - MAX_PROJECT_DETAILS_CHARACTERS
+                ).toLocaleString("en-US")} over limit — shorten before sending`
+              : `${projectDetailsLength.toLocaleString("en-US")} / ${MAX_PROJECT_DETAILS_CHARACTERS.toLocaleString("en-US")}`}
+          </p>
+          <span className={styles.visuallyHidden} aria-live="polite">
+            {projectDetailsOverLimit
+              ? `Your opportunity brief is ${(
+                  projectDetailsLength - MAX_PROJECT_DETAILS_CHARACTERS
+                ).toLocaleString("en-US")} characters over the limit. Shorten it before sending.`
+              : ""}
+          </span>
+        </div>
       </div>
 
       <div className={styles.honeypot} aria-hidden="true">
@@ -153,8 +197,11 @@ export function ContactForm() {
           your inquiry.
         </p>
         <button
+          data-submitting={submission.status === "submitting"}
           type="submit"
-          disabled={submission.status === "submitting"}
+          disabled={
+            submission.status === "submitting" || projectDetailsOverLimit
+          }
         >
           {submission.status === "submitting" ? "Sending…" : "Send inquiry"}
           <ArrowUpRight />

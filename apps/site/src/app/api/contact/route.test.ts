@@ -76,7 +76,19 @@ describe("POST /api/contact", () => {
 
   it("rejects oversized bodies before parsing", async () => {
     const response = await POST(
-      request(validSubmission, { "content-length": "16001" }),
+      request(validSubmission, { "content-length": "262145" }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(mocks.saveContactSubmission).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized bodies when content length is unavailable", async () => {
+    const response = await POST(
+      request({
+        ...validSubmission,
+        projectDetails: "A".repeat(262_145),
+      }),
     );
 
     expect(response.status).toBe(413);

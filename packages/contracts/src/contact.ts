@@ -5,6 +5,8 @@ export const projectStages = [
   "existing-business",
 ] as const;
 
+export const MAX_PROJECT_DETAILS_CHARACTERS = 50_000;
+
 export type ContactSubmission = {
   name: string;
   email: string;
@@ -63,10 +65,13 @@ export function validateContactSubmission(input: unknown): ValidationResult {
     return { success: false, message: "Please select your current stage." };
   }
 
-  if (projectDetails.length < 20 || projectDetails.length > 2000) {
+  if (
+    projectDetails.length < 20 ||
+    projectDetails.length > MAX_PROJECT_DETAILS_CHARACTERS
+  ) {
     return {
       success: false,
-      message: "Please share between 20 and 2,000 characters.",
+      message: `Please share between 20 and ${MAX_PROJECT_DETAILS_CHARACTERS.toLocaleString("en-US")} characters.`,
     };
   }
 

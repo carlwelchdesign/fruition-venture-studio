@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateContactSubmission } from "./contact";
+import {
+  MAX_PROJECT_DETAILS_CHARACTERS,
+  validateContactSubmission,
+} from "./contact";
 
 const validSubmission = {
   name: "Ada Founder",
@@ -51,6 +54,31 @@ describe("validateContactSubmission", () => {
     expect(result).toEqual({
       success: false,
       message: "Unable to process this submission.",
+    });
+  });
+
+  it("accepts a substantial opportunity brief without truncation", () => {
+    const projectDetails = "A".repeat(MAX_PROJECT_DETAILS_CHARACTERS);
+    const result = validateContactSubmission({
+      ...validSubmission,
+      projectDetails,
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { projectDetails },
+    });
+  });
+
+  it("rejects a brief only after the documented large-text limit", () => {
+    const result = validateContactSubmission({
+      ...validSubmission,
+      projectDetails: "A".repeat(MAX_PROJECT_DETAILS_CHARACTERS + 1),
+    });
+
+    expect(result).toEqual({
+      success: false,
+      message: "Please share between 20 and 50,000 characters.",
     });
   });
 });
