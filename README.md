@@ -18,7 +18,7 @@ pipeline.
 
 ## Local development
 
-Use Node 20.20.1:
+Use Node 24:
 
 ```bash
 nvm use
