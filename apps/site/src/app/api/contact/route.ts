@@ -5,7 +5,7 @@ import {
   saveContactSubmission,
 } from "@/lib/submissions";
 
-const MAX_BODY_BYTES = 16_000;
+const MAX_BODY_BYTES = 256 * 1024;
 
 function isSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (rawBody.length > MAX_BODY_BYTES) {
+  if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
     return Response.json(
       { message: "This submission is too large." },
       { status: 413 },
