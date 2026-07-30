@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/apps/*/node_modules
+/packages/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,6 +17,7 @@
 
 # next.js
 /.next/
+/apps/*/.next/
 /out/
 
 # production
@@ -33,6 +36,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+!.env.docker.example
 
 # vercel
 .vercel
@@ -42,5 +46,8 @@ yarn-error.log*
 next-env.d.ts
 /.swc
 
+# workflow-generated handlers (the admin app generates its own during builds)
+/src/app/.well-known
+
 # generated database client
-/src/generated/prisma
+/packages/database/src/generated

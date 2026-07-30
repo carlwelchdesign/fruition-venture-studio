@@ -1,0 +1,30 @@
+{
+  "name": "@fruition/admin",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "prebuild": "npm run db:generate --workspace @fruition/database",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fruition/brand": "*",
+    "@fruition/database": "*",
+    "@openai/agents": "^0.14.1",
+    "better-auth": "^1.6.25",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "workflow": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

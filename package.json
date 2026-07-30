@@ -1,9 +1,26 @@
 {
-  "name": "fruition-venture-studio",
-  "version": "0.1.0",
+  "name": "fruition-platform",
+  "version": "0.2.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
     "node": "24.x"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @fruition/site",
+    "dev:site": "npm run dev --workspace @fruition/site",
+    "dev:admin": "npm run dev --workspace @fruition/admin",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "eslint apps packages",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "npm run db:generate --workspace @fruition/database",
+    "db:migrate": "npm run db:migrate --workspace @fruition/database",
+    "db:deploy": "npm run db:deploy --workspace @fruition/database",
+    "verify:boundaries": "node scripts/verify-boundaries.mjs"
   },
   "overrides": {
     "workflow": {
@@ -17,40 +34,14 @@
     "postcss": "8.5.25",
     "sharp": "0.35.3"
   },
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "postinstall": "prisma generate",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy"
-  },
-  "dependencies": {
-    "@openai/agents": "^0.14.1",
-    "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.9.1",
-    "better-auth": "^1.6.25",
-    "dotenv": "^17.4.2",
-    "next": "16.2.12",
-    "pg": "^8.22.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "server-only": "^0.0.1",
-    "workflow": "^4.7.0",
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^24.1.0",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
-    "prisma": "^7.9.1",
     "tsx": "^4.20.6",
     "typescript": "^5",
     "vitest": "^4.0.18"
