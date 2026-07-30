@@ -116,4 +116,36 @@ describe("POST /api/contact", () => {
         "We have received several recent submissions. Please wait before trying again.",
     });
   });
+
+  it("logs safe database diagnostics without submission or error details", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.saveContactSubmission.mockRejectedValue({
+      name: "error",
+      code: "22021",
+      severity: "ERROR",
+      routine: "report_invalid_encoding",
+      message: "Sensitive provider message",
+      detail: "Sensitive database detail",
+    });
+
+    const response = await POST(
+      request(validSubmission, { "x-vercel-id": "iad1::test-request" }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(errorLog).toHaveBeenCalledOnce();
+    const serialized = String(errorLog.mock.calls[0][0]);
+    expect(JSON.parse(serialized)).toEqual({
+      level: "error",
+      event: "contact_persistence_failed",
+      requestId: "iad1::test-request",
+      category: "UnknownError",
+      code: "22021",
+      severity: "ERROR",
+      routine: "report_invalid_encoding",
+    });
+    expect(serialized).not.toContain(validSubmission.projectDetails);
+    expect(serialized).not.toContain("Sensitive provider message");
+    expect(serialized).not.toContain("Sensitive database detail");
+  });
 });

@@ -7,6 +7,31 @@ import {
 
 const MAX_BODY_BYTES = 256 * 1024;
 
+function persistenceDiagnostic(error: unknown) {
+  const fallback = {
+    category: error instanceof Error ? error.name : "UnknownError",
+  };
+  if (!error || typeof error !== "object") {
+    return fallback;
+  }
+
+  const candidate = error as Record<string, unknown>;
+  const diagnostic: Record<string, string> = { ...fallback };
+  for (const field of [
+    "code",
+    "severity",
+    "routine",
+    "constraint",
+    "table",
+    "column",
+  ] as const) {
+    if (typeof candidate[field] === "string") {
+      diagnostic[field] = candidate[field];
+    }
+  }
+  return diagnostic;
+}
+
 function isSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) {
@@ -98,9 +123,14 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
-    console.error("Contact persistence failed", {
-      category: error instanceof Error ? error.name : "UnknownError",
-    });
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "contact_persistence_failed",
+        requestId: request.headers.get("x-vercel-id"),
+        ...persistenceDiagnostic(error),
+      }),
+    );
     return Response.json(
       {
         message:
