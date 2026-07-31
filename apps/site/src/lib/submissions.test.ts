@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { QueryResult } from "pg";
+import { MAX_PROJECT_DETAILS_CHARACTERS } from "@fruition/contracts/contact";
 import {
   IntakeRateLimitError,
   saveContactSubmission,
@@ -51,5 +52,20 @@ describe("saveContactSubmission", () => {
     await expect(
       saveContactSubmission(submission, "203.0.113.10", execute),
     ).rejects.toBeInstanceOf(IntakeRateLimitError);
+  });
+
+  it("passes a maximum-length brief to the execute-only function intact", async () => {
+    const execute = vi.fn().mockResolvedValue({
+      rows: [{ ideaId: "idea-large", submitterId: "submitter-1" }],
+    } as QueryResult<{ ideaId: string; submitterId: string }>);
+    const projectDetails = "A".repeat(MAX_PROJECT_DETAILS_CHARACTERS);
+
+    await saveContactSubmission(
+      { ...submission, projectDetails },
+      "203.0.113.10",
+      execute,
+    );
+
+    expect(execute.mock.calls[0][1][4]).toBe(projectDetails);
   });
 });
