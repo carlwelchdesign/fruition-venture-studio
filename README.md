@@ -4,6 +4,61 @@ Fruition is an npm-workspace monorepo containing an intentionally simple
 public studio site and an independently deployed, owner-only idea-intelligence
 admin.
 
+## Product tour
+
+### Public venture studio
+
+The [public site](https://fruition-venture-studio.vercel.app/) introduces the
+studio, explains its selective partnership model, and gives founders a direct
+path from the brand promise—**From concept to company.**—to a structured idea
+submission.
+
+![Fruition Venture Studio landing page with architectural photography, the From concept to company tagline, and studio capabilities](./docs/screenshots/public-site-hero.jpg)
+
+The intake accepts a short inquiry or a detailed brief of up to 50,000
+characters. Explicit consent, confidential-information guidance, and clear
+stage selection set expectations before anything enters the research system.
+
+![Public idea-submission form with founder contact fields, project stage, long-form opportunity details, and consent](./docs/screenshots/public-site-contact.jpg)
+
+### Private idea intelligence admin
+
+The separate owner-only admin turns submissions into a controlled opportunity
+pipeline. The inbox shows status, repeat-submitter grouping, active research,
+and the latest studio score without exposing admin capabilities to the public
+application.
+
+> The admin screenshots below use an isolated, fictional documentation dataset.
+> No real founder, email address, submission, or research record is included in
+> this repository.
+
+![Private Fruition opportunity inbox showing submission status, grouped submitters, and studio scores](./docs/screenshots/admin-opportunity-inbox.jpg)
+
+#### Transparent studio scorecard
+
+The synthesis produces a weighted opportunity profile instead of a single
+opaque verdict. Every dimension retains its rationale and confidence, and the
+owner can record a reasoned human override.
+
+![Studio scorecard with weighted opportunity dimensions, evidence-backed rationale, and human override controls](./docs/screenshots/admin-studio-scorecard.jpg)
+
+#### Hybrid venture board with verified evidence
+
+The moderated board and direct-specialist conversations let the owner challenge
+the recommendation, add founder knowledge, and surface variables that could
+change the decision. Pasted public links show their retrieval status and are
+saved as untrusted evidence before agents use them.
+
+![Hybrid venture board discussion showing an analyzed public source, specialist contributors, and variables that could change the decision](./docs/screenshots/admin-venture-board.jpg)
+
+#### Market economics and venture finance
+
+The finance specialist makes assumptions visible through market sizing,
+three-year scenarios, unit economics, cost drivers, and confidence labels.
+These are decision models—not forecasts—and remain advisory to the human owner.
+
+![Venture finance analysis with TAM, SAM, SOM, and conservative, base, and upside revenue scenarios](./docs/screenshots/admin-venture-finance.jpg)
+
 ## Security boundaries
 
 - `apps/site` contains the public landing page and `POST /api/contact`.
