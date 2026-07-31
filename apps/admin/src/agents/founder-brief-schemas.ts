@@ -2,11 +2,18 @@ import { z } from "zod";
 
 const httpUrlSchema = z
   .string()
-  .url()
+  // OpenAI structured outputs reject JSON Schema's `format: "uri"`.
+  // Keep the generated schema to supported string constraints and validate
+  // the URL semantics when Zod parses the completed response.
+  .min(1)
   .max(2048)
   .refine((value) => {
-    const protocol = new URL(value).protocol;
-    return protocol === "http:" || protocol === "https:";
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
   }, "Evidence URLs must use http or https.");
 
 export const founderBriefContentSchema = z.object({
