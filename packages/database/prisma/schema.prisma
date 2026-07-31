@@ -57,6 +57,12 @@ enum BoardProposalStatus {
   DISMISSED
 }
 
+enum FounderBriefStatus {
+  DRAFT
+  PUBLISHED
+  REVOKED
+}
+
 model User {
   id                     String               @id
   name                   String
@@ -71,6 +77,7 @@ model User {
   notes                  AdminNote[]
   boardSessions          BoardSession[]
   reviewedBoardProposals BoardScoreProposal[] @relation("BoardProposalReviewer")
+  reviewedFounderBriefs  FounderBrief[]        @relation("FounderBriefReviewer")
 
   @@map("user")
 }
@@ -138,6 +145,7 @@ model Submitter {
 
 model Idea {
   id              String           @id @default(cuid())
+  publicReference String           @unique
   submitterId     String
   nameSnapshot    String
   emailSnapshot   String
@@ -155,6 +163,7 @@ model Idea {
   researchRuns    ResearchRun[]
   notes           AdminNote[]
   boardSessions   BoardSession[]
+  founderBriefs   FounderBrief[]
 
   @@index([submitterId, createdAt])
   @@index([status, createdAt])
@@ -176,6 +185,7 @@ model ResearchRun {
   reports       AgentReport[]
   scorecard     Scorecard?
   boardSessions BoardSession[]
+  founderBriefs FounderBrief[]
 
   @@unique([ideaId, version])
   @@index([ideaId, status])
@@ -296,6 +306,37 @@ model BoardScoreProposal {
 
   @@index([boardMessageId])
   @@index([scoreDimensionId, status])
+}
+
+model FounderBrief {
+  id                    String             @id @default(cuid())
+  ideaId                String
+  researchRunId         String
+  version               Int
+  status                FounderBriefStatus @default(DRAFT)
+  title                 String
+  content               Json
+  financials            Json?
+  sources               Json
+  tokenHash             String?            @unique
+  expiresAt             DateTime?
+  publishedAt           DateTime?
+  firstViewedAt         DateTime?
+  lastViewedAt          DateTime?
+  viewCount             Int                @default(0)
+  deliveryStatus        String?
+  deliveredAt           DateTime?
+  deliveryError         String?
+  reviewedById          String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  idea                  Idea               @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  researchRun           ResearchRun        @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
+  reviewedBy            User?              @relation("FounderBriefReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@unique([ideaId, version])
+  @@index([ideaId, status, createdAt])
+  @@index([researchRunId])
 }
 
 model AdminNote {

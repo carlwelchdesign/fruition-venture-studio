@@ -1,0 +1,59 @@
+.container {
+  display: flex;
+  width: 100%;
+  min-height: 320px;
+  justify-content: center;
+  color: #aab0b4;
+  font-size: 0.68rem;
+}
+
+.container :global(.recharts-cartesian-axis-tick text) {
+  fill: #aab0b4;
+}
+
+.container :global(.recharts-cartesian-grid line) {
+  stroke: #30363a;
+}
+
+.container :global(.recharts-surface),
+.container :global(.recharts-layer) {
+  outline: none;
+}
+
+.tooltip {
+  display: grid;
+  min-width: 175px;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #5c6469;
+  color: var(--white);
+  background: var(--graphite);
+  box-shadow: 0 16px 38px rgb(0 0 0 / 30%);
+}
+
+.tooltip > strong {
+  font-size: 0.62rem;
+}
+
+.tooltipItem {
+  display: grid;
+  grid-template-columns: 7px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.tooltipItem > span {
+  width: 7px;
+  height: 7px;
+}
+
+.tooltipItem p {
+  color: #c7cbcd;
+  font-size: 0.58rem;
+}
+
+.tooltipItem b {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.6rem;
+  font-weight: 550;
+}

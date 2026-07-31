@@ -3,11 +3,13 @@ import "server-only";
 import { createHmac } from "node:crypto";
 import { Pool } from "pg";
 import type { QueryResult } from "pg";
+import type { QueryResultRow } from "pg";
 import type { ContactSubmission } from "@fruition/contracts/contact";
 
 type SavedSubmission = {
   ideaId: string;
   submitterId: string;
+  publicReference: string;
 };
 
 type QueryExecutor = (
@@ -51,6 +53,13 @@ function getPool() {
   return globalForIntake.intakePool;
 }
 
+export function executeIntakeCapability<Row extends QueryResultRow>(
+  text: string,
+  values: readonly unknown[],
+) {
+  return getPool().query<Row>(text, [...values]);
+}
+
 function scopeHash(secret: string, kind: "email" | "ip", value: string) {
   return createHmac("sha256", secret)
     .update(`${kind}:${value}`)
@@ -85,7 +94,7 @@ export async function saveContactSubmission(
   try {
     const result = await query(
       `
-        SELECT "ideaId", "submitterId"
+        SELECT "ideaId", "submitterId", "publicReference"
         FROM public.submit_fruition_idea(
           $1, $2, $3, $4, $5, $6, $7, $8
         )

@@ -48,9 +48,11 @@ function request(
 beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.CONTACT_TO_EMAIL;
+  mocks.sendEmail.mockResolvedValue({ delivered: true });
   mocks.saveContactSubmission.mockResolvedValue({
     ideaId: "idea-1",
     submitterId: "submitter-1",
+    publicReference: "FVS-ABC123DEF456",
   });
 });
 
@@ -61,7 +63,25 @@ describe("POST /api/contact", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       submissionId: "idea-1",
+      reference: "FVS-ABC123DEF456",
       status: "received",
+      confirmationEmail: "sent",
+    });
+  });
+
+  it("keeps a saved submission successful when its receipt cannot be sent", async () => {
+    mocks.sendEmail.mockResolvedValue({
+      delivered: false,
+      reason: "not-configured",
+    });
+
+    const response = await POST(request(validSubmission));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      reference: "FVS-ABC123DEF456",
+      status: "received",
+      confirmationEmail: "unavailable",
     });
   });
 
