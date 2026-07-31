@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@fruition/brand": "*",
+    "@fruition/contracts": "*",
     "@fruition/database": "*",
     "@openai/agents": "^0.14.1",
     "better-auth": "^1.6.25",
@@ -20,7 +21,8 @@
     "react-dom": "19.2.4",
     "recharts": "^3.8.0",
     "server-only": "^0.0.1",
-    "workflow": "^4.7.0"
+    "workflow": "^4.7.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",

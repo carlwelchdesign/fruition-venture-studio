@@ -19,6 +19,8 @@ GRANT USAGE ON SCHEMA public TO fruition_intake_api;
 GRANT EXECUTE ON FUNCTION public.submit_fruition_idea(
   TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT, TEXT
 ) TO fruition_intake_api;
+GRANT EXECUTE ON FUNCTION public.get_published_founder_brief(TEXT)
+TO fruition_intake_api;
 
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM fruition_intake_api;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM fruition_intake_api;

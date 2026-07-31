@@ -24,19 +24,31 @@ beforeEach(() => {
 describe("saveContactSubmission", () => {
   it("uses the capability function and returns only saved identifiers", async () => {
     const execute = vi.fn().mockResolvedValue({
-      rows: [{ ideaId: "idea-1", submitterId: "submitter-1" }],
-    } as QueryResult<{ ideaId: string; submitterId: string }>);
+      rows: [
+        {
+          ideaId: "idea-1",
+          submitterId: "submitter-1",
+          publicReference: "FVS-ABC123DEF456",
+        },
+      ],
+    } as QueryResult<{
+      ideaId: string;
+      submitterId: string;
+      publicReference: string;
+    }>);
 
     await expect(
       saveContactSubmission(submission, "203.0.113.10", execute),
     ).resolves.toEqual({
       ideaId: "idea-1",
       submitterId: "submitter-1",
+      publicReference: "FVS-ABC123DEF456",
     });
 
     expect(execute).toHaveBeenCalledOnce();
     const [statement, values] = execute.mock.calls[0];
     expect(statement).toContain("public.submit_fruition_idea");
+    expect(statement).toContain('"publicReference"');
     expect(statement).not.toContain('"Submitter"');
     expect(values).toHaveLength(8);
     expect(values[6]).toMatch(/^[a-f0-9]{64}$/);
@@ -56,8 +68,18 @@ describe("saveContactSubmission", () => {
 
   it("passes a maximum-length brief to the execute-only function intact", async () => {
     const execute = vi.fn().mockResolvedValue({
-      rows: [{ ideaId: "idea-large", submitterId: "submitter-1" }],
-    } as QueryResult<{ ideaId: string; submitterId: string }>);
+      rows: [
+        {
+          ideaId: "idea-large",
+          submitterId: "submitter-1",
+          publicReference: "FVS-LARGE123456",
+        },
+      ],
+    } as QueryResult<{
+      ideaId: string;
+      submitterId: string;
+      publicReference: string;
+    }>);
     const projectDetails = "A".repeat(MAX_PROJECT_DETAILS_CHARACTERS);
 
     await saveContactSubmission(

@@ -15,9 +15,13 @@ admin.
 - `packages/brand` contains reusable Fruition identity primitives.
 
 The public app connects with a restricted PostgreSQL role. That role cannot
-read or change tables and can only execute `submit_fruition_idea`, a
-`SECURITY DEFINER` function that validates, rate-limits, groups, and stores a
-submission atomically.
+read or change tables and can only execute two narrowly scoped
+`SECURITY DEFINER` capabilities:
+
+- `submit_fruition_idea` validates, rate-limits, groups, and stores a
+  submission atomically.
+- `get_published_founder_brief` returns only a manually published,
+  unexpired founder-safe report for a valid private-link token hash.
 
 ## Local development
 
@@ -119,7 +123,14 @@ must not retain valid credentials.
 4. Seven bounded specialists collect public-source evidence, including a
    structured market-economics and venture-finance assessment.
 5. An eighth agent synthesizes a cited, versioned scorecard.
-6. The owner records the disposition and may override scores with a required
+6. For selected opportunities, the owner may generate and edit a founder-safe
+   Opportunity Brief from completed specialist reports. Internal scores,
+   notes, dispositions, and board conversations are excluded.
+7. External brief delivery requires an explicit human review, a separate
+   publish action, and `FOUNDER_BRIEF_PUBLISHING_ENABLED=true` in the admin
+   deployment. Published links expire after 90 days and can be revoked or
+   reissued.
+8. The owner records the disposition and may override scores with a required
    reason.
 
 Agents remain advisory. They cannot contact people, purchase anything, deploy

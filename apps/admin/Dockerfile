@@ -23,6 +23,8 @@ RUN npm run db:generate
 RUN BETTER_AUTH_SECRET=build-only-secret-that-is-never-used-at-runtime \
     AUTH_RATE_LIMIT_SECRET=build-only-rate-secret-that-is-never-used \
     ADMIN_APP_URL=http://localhost:3001 \
+    PUBLIC_SITE_URL=http://localhost:3000 \
+    ADMIN_EMAILS=build@example.com \
     DATABASE_URL=postgresql://build:build@localhost:5432/build \
     npm run build --workspace @fruition/admin
 

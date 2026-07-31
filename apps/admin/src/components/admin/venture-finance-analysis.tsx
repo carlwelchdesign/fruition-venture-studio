@@ -77,8 +77,10 @@ function confidenceLabel(confidence: number) {
 
 export function VentureFinanceAnalysis({
   financials,
+  sectionNumber = "04",
 }: {
   financials: VentureFinancials;
+  sectionNumber?: string;
 }) {
   const scenarios = new Map(
     financials.scenarios.map((scenario) => [scenario.name, scenario]),
@@ -153,7 +155,7 @@ export function VentureFinanceAnalysis({
   return (
     <section className={styles.panel}>
       <div className={styles.panelHeading}>
-        <span>04</span>
+        <span>{sectionNumber}</span>
         <h2>Market economics and venture finance</h2>
       </div>
       <div className={styles.financeNotice}>

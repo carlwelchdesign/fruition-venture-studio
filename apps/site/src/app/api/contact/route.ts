@@ -108,7 +108,11 @@ export async function POST(request: Request) {
   const { name, email, organization, projectStage, projectDetails } =
     submission.data;
 
-  let saved: { ideaId: string; submitterId: string };
+  let saved: {
+    ideaId: string;
+    submitterId: string;
+    publicReference: string;
+  };
   try {
     const clientAddress =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
@@ -141,33 +145,71 @@ export async function POST(request: Request) {
   }
 
   const to = process.env.CONTACT_TO_EMAIL;
-  if (to) {
-    const delivery = await sendEmail({
-      to,
-      replyTo: email,
-      subject: `Fruition inquiry from ${name}`,
+  const [ownerDelivery, founderDelivery] = await Promise.all([
+    to
+      ? sendEmail({
+          to,
+          replyTo: email,
+          subject: `Fruition inquiry from ${name}`,
+          text: [
+            `Reference: ${saved.publicReference}`,
+            `Submission: ${saved.ideaId}`,
+            `Name: ${name}`,
+            `Email: ${email}`,
+            `Organization: ${organization || "Not provided"}`,
+            `Stage: ${projectStage}`,
+            "",
+            projectDetails,
+          ].join("\n"),
+        })
+      : Promise.resolve({
+          delivered: false as const,
+          reason: "not-configured" as const,
+        }),
+    sendEmail({
+      to: email,
+      replyTo: to,
+      subject: `${saved.publicReference} — Fruition received your idea`,
       text: [
-        `Submission: ${saved.ideaId}`,
-        `Name: ${name}`,
-        `Email: ${email}`,
-        `Organization: ${organization || "Not provided"}`,
-        `Stage: ${projectStage}`,
+        `Hello ${name},`,
         "",
-        projectDetails,
+        "Your idea is in.",
+        "",
+        `Reference: ${saved.publicReference}`,
+        "",
+        "What happens next",
+        "1. Fruition reviews the opportunity for clarity and studio fit.",
+        "2. Selected ideas may move into AI-assisted, public-source research and human review.",
+        "3. If your idea is selected, you may receive a private Fruition Opportunity Brief by email.",
+        "",
+        "Not every submission receives a brief, and this receipt does not promise a response or investment. You can reply to this email if you need to add important context.",
+        "",
+        "Please do not send confidential or proprietary information by email.",
+        "",
+        "Fruition Venture Studio",
+        "From concept to company.",
       ].join("\n"),
-    });
+    }),
+  ]);
 
-    if (!delivery.delivered && delivery.reason === "provider-error") {
-      console.error("Contact notification failed", {
-        status: delivery.status,
-        ideaId: saved.ideaId,
-      });
-    }
+  if (!ownerDelivery.delivered && ownerDelivery.reason === "provider-error") {
+    console.error("Contact notification failed", {
+      status: ownerDelivery.status,
+      ideaId: saved.ideaId,
+    });
+  }
+  if (!founderDelivery.delivered && founderDelivery.reason === "provider-error") {
+    console.error("Founder receipt failed", {
+      status: founderDelivery.status,
+      ideaId: saved.ideaId,
+    });
   }
 
   return Response.json({
     submissionId: saved.ideaId,
+    reference: saved.publicReference,
     status: "received",
-    message: "Thank you. Your note has been received, and we’ll be in touch.",
+    message: "Your idea is in.",
+    confirmationEmail: founderDelivery.delivered ? "sent" : "unavailable",
   });
 }

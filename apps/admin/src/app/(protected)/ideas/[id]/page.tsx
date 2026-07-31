@@ -5,6 +5,9 @@ import { ResearchCommission } from "@/components/admin/research-commission";
 import { IdeaScorecard } from "@/components/admin/idea-scorecard";
 import { IdeaSidebar } from "@/components/admin/idea-sidebar";
 import { VentureFinanceAnalysis } from "@/components/admin/venture-finance-analysis";
+import { BoardRoom } from "@/components/admin/board-room";
+import { FounderBriefWorkspace } from "@/components/admin/founder-brief-workspace";
+import { founderBriefContentSchema } from "@/agents/founder-brief-schemas";
 import { ventureFinancialsSchema } from "@/agents/research-schemas";
 import { prisma } from "@fruition/database";
 import styles from "../../../admin.module.css";
@@ -39,6 +42,9 @@ export default async function IdeaPage({
           },
         },
       },
+      founderBriefs: {
+        orderBy: { version: "desc" },
+      },
     },
   });
 
@@ -54,6 +60,52 @@ export default async function IdeaPage({
     financeReport?.structuredData,
   );
   const financials = financeResult.success ? financeResult.data : null;
+  const activePublishedBrief =
+    idea.founderBriefs.find((brief) => brief.status === "PUBLISHED") ?? null;
+  const latestBrief =
+    idea.founderBriefs.find((brief) => brief.status === "DRAFT") ??
+    activePublishedBrief ??
+    idea.founderBriefs[0] ??
+    null;
+
+  type BriefRecord = (typeof idea.founderBriefs)[number];
+  function briefSnapshot(candidate: BriefRecord | null | undefined) {
+    const contentResult = founderBriefContentSchema.safeParse(
+      candidate?.content,
+    );
+    const rawContent =
+      candidate?.content && typeof candidate.content === "object"
+        ? (candidate.content as Record<string, unknown>)
+        : null;
+    return candidate && contentResult.success
+      ? {
+          id: candidate.id,
+          version: candidate.version,
+          status: candidate.status,
+          title: candidate.title,
+          content: {
+            ...contentResult.data,
+            disclaimer:
+              typeof rawContent?.disclaimer === "string"
+                ? rawContent.disclaimer
+                : "",
+          },
+          reviewed: Boolean(candidate.reviewedById),
+          deliveryStatus: candidate.deliveryStatus,
+          deliveryError: candidate.deliveryError,
+          publishedAt: candidate.publishedAt?.toISOString() ?? null,
+          expiresAt: candidate.expiresAt?.toISOString() ?? null,
+          viewCount: candidate.viewCount,
+          firstViewedAt: candidate.firstViewedAt?.toISOString() ?? null,
+        }
+      : null;
+  }
+
+  const founderBrief = briefSnapshot(latestBrief);
+  const publishedFounderBrief =
+    activePublishedBrief?.id === latestBrief?.id
+      ? null
+      : briefSnapshot(activePublishedBrief);
 
   return (
     <>
@@ -144,12 +196,32 @@ export default async function IdeaPage({
               scorecard={latestRun.scorecard}
             />
           ) : null}
+          {latestRun?.scorecard ? (
+            <BoardRoom
+              ideaId={idea.id}
+              researchRunId={latestRun.id}
+              researchVersion={latestRun.version}
+            />
+          ) : null}
           {financials ? (
-            <VentureFinanceAnalysis financials={financials} />
+            <VentureFinanceAnalysis
+              financials={financials}
+              sectionNumber="05"
+            />
           ) : null}
           <IdeaReports
             reports={latestRun?.reports ?? []}
-            sectionNumber={financials ? "05" : "04"}
+            sectionNumber={financials ? "06" : "05"}
+          />
+          <FounderBriefWorkspace
+            ideaId={idea.id}
+            researchReady={latestRun?.status === "COMPLETED"}
+            publishingEnabled={
+              process.env.FOUNDER_BRIEF_PUBLISHING_ENABLED === "true"
+            }
+            brief={founderBrief}
+            activePublishedBrief={publishedFounderBrief}
+            sectionNumber={financials ? "07" : "06"}
           />
         </div>
 

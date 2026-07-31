@@ -82,8 +82,10 @@ services:
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_RESEND_API_KEY: ${ADMIN_RESEND_API_KEY:-}
       ADMIN_FROM_EMAIL: ${ADMIN_FROM_EMAIL:-}
+      CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6-sol}
+      FOUNDER_BRIEF_PUBLISHING_ENABLED: ${FOUNDER_BRIEF_PUBLISHING_ENABLED:-false}
     depends_on:
       migrate:
         condition: service_completed_successfully
