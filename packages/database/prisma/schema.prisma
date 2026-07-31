@@ -57,6 +57,13 @@ enum BoardProposalStatus {
   DISMISSED
 }
 
+enum BoardSourceStatus {
+  VERIFIED
+  BLOCKED
+  UNAVAILABLE
+  UNSUPPORTED
+}
+
 enum FounderBriefStatus {
   DRAFT
   PUBLISHED
@@ -285,8 +292,29 @@ model BoardMessage {
   createdAt        DateTime             @default(now())
   boardSession     BoardSession         @relation(fields: [boardSessionId], references: [id], onDelete: Cascade)
   scoreProposals   BoardScoreProposal[]
+  verifiedSources  BoardVerifiedSource[]
 
   @@index([boardSessionId, createdAt])
+}
+
+model BoardVerifiedSource {
+  id             String            @id @default(cuid())
+  boardMessageId String
+  originalUrl    String
+  finalUrl       String?
+  title          String?
+  status         BoardSourceStatus
+  statusDetail   String?
+  mimeType       String?
+  contentHash    String?
+  extractedText  String?
+  retrievedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  boardMessage   BoardMessage      @relation(fields: [boardMessageId], references: [id], onDelete: Cascade)
+
+  @@unique([boardMessageId, originalUrl])
+  @@index([boardMessageId, status])
+  @@index([contentHash])
 }
 
 model BoardScoreProposal {

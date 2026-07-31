@@ -1,5 +1,6 @@
 import { Agent, Runner, webSearchTool } from "@openai/agents";
 import { boardResponseSchema, type BoardAgentResponse } from "@/agents/board-schemas";
+import { restrictBoardResponseCitations } from "@/agents/board-provenance";
 import { specialistDefinitions } from "@/agents/research-config";
 import type { BoardSpecialistRole } from "@/lib/board-contract";
 
@@ -36,6 +37,15 @@ export type BoardEvidenceContext = {
     speaker: string;
     body: string;
   }>;
+  verifiedSources: Array<{
+    originalUrl: string;
+    finalUrl: string | null;
+    title: string | null;
+    status: "VERIFIED" | "BLOCKED" | "UNAVAILABLE" | "UNSUPPORTED";
+    statusDetail: string | null;
+    extractedText: string | null;
+    retrievedAt: string | null;
+  }>;
 };
 
 const sharedInstructions = `
@@ -62,6 +72,7 @@ function contextPrompt(context: BoardEvidenceContext, question: string) {
     specialistReports: context.reports,
     currentScorecard: context.scorecard,
     conversation: context.conversation,
+    verifiedLinkEvidence: context.verifiedSources,
   });
 }
 
@@ -135,7 +146,11 @@ materially changes a named score dimension.`,
     throw new Error("The specialist did not return a board response.");
   }
 
-  return result.finalOutput;
+  return restrictBoardResponseCitations(
+    context,
+    result.finalOutput,
+    result.rawResponses,
+  );
 }
 
 export async function runModeratedBoardTurn({
@@ -185,5 +200,9 @@ Return contributors matching the specialists you actually consulted.`,
     throw new Error("The board did not return a response.");
   }
 
-  return result.finalOutput;
+  return restrictBoardResponseCitations(
+    context,
+    result.finalOutput,
+    result.rawResponses,
+  );
 }

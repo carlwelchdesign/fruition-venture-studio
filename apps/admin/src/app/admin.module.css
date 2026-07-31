@@ -891,6 +891,134 @@
   line-height: 1.78;
 }
 
+.verifiedSources,
+.detectedSources {
+  margin-top: 22px;
+  border: 1px solid #b8bdc0;
+  background: #f1f3f3;
+}
+
+.verifiedSources > div,
+.detectedSources > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 17px;
+  border-bottom: 1px solid #c7cbcd;
+}
+
+.verifiedSources h4,
+.detectedSources strong {
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.verifiedSources > div > span,
+.detectedSources small {
+  color: var(--steel);
+  font-size: 0.54rem;
+}
+
+.verifiedSources ul,
+.detectedSources ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.verifiedSources li,
+.detectedSources li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 17px;
+  border-top: 1px solid #d4d7d8;
+}
+
+.verifiedSources li:first-child,
+.detectedSources li:first-child {
+  border-top: 0;
+}
+
+.verifiedSources li > span,
+.detectedSources li > span:first-child {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold-dark);
+}
+
+.verifiedSources li[data-status="BLOCKED"] > span,
+.verifiedSources li[data-status="UNAVAILABLE"] > span,
+.verifiedSources li[data-status="UNSUPPORTED"] > span,
+.detectedSourcesError li > span:first-child {
+  background: #a04432;
+}
+
+.verifiedSources li > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.verifiedSources a,
+.detectedSources li > span:nth-child(2) {
+  overflow: hidden;
+  font-size: 0.63rem;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verifiedSources a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.verifiedSources small {
+  color: var(--steel);
+  font-size: 0.54rem;
+  line-height: 1.45;
+}
+
+.verifiedSources li > strong,
+.detectedSources li > strong {
+  color: var(--gold-dark);
+  font-size: 0.49rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.verifiedSources li[data-status="BLOCKED"] > strong,
+.verifiedSources li[data-status="UNAVAILABLE"] > strong,
+.verifiedSources li[data-status="UNSUPPORTED"] > strong,
+.detectedSourcesError strong,
+.detectedSourcesError li > strong {
+  color: #8b3527;
+}
+
+.pendingSources {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 17px;
+  color: var(--steel);
+}
+
+.pendingSources .boardPulse {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.pendingSources p {
+  font-size: 0.57rem;
+}
+
 .boardUnknowns {
   margin-top: 26px;
   padding: 20px;
@@ -1089,6 +1217,21 @@
 .boardComposer textarea:focus {
   border-color: var(--gold-dark);
   box-shadow: 0 0 0 1px var(--gold-dark);
+}
+
+.detectedSources {
+  margin-top: 0;
+}
+
+.detectedSources > div {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detectedSourcesError {
+  border-color: #b76a5c;
+  background: #f4e8e4;
 }
 
 .boardComposerFooter {
@@ -2506,6 +2649,16 @@
 
   .boardComposerFooter > div {
     justify-content: space-between;
+  }
+
+  .verifiedSources li,
+  .detectedSources li {
+    grid-template-columns: 8px minmax(0, 1fr);
+  }
+
+  .verifiedSources li > strong,
+  .detectedSources li > strong {
+    grid-column: 2;
   }
 
   .signInPage {

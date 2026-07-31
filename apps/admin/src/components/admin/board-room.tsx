@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   boardSpecialistLabels,
   boardSpecialistRoles,
+  extractBoardLinks,
+  maxBoardLinksPerMessage,
   type BoardChannel,
   type BoardSessionSnapshot,
   type BoardSpecialistRole,
+  type BoardVerifiedSource,
 } from "@/lib/board-contract";
 import styles from "@/app/admin.module.css";
 
@@ -20,6 +23,7 @@ const starterQuestions = [
 const messageTimeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
+  timeZone: "America/Los_Angeles",
 });
 
 function boardEndpoint({
@@ -49,6 +53,60 @@ function speakerLabel(
   return role ? boardSpecialistLabels[role] : "You";
 }
 
+const verifiedSourceLabels: Record<BoardVerifiedSource["status"], string> = {
+  VERIFIED: "Analyzed",
+  BLOCKED: "Blocked",
+  UNAVAILABLE: "Unavailable",
+  UNSUPPORTED: "Unsupported",
+};
+
+function sourceHostname(value: string) {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "");
+  } catch {
+    return value;
+  }
+}
+
+function VerifiedSourcesList({
+  sources,
+}: {
+  sources: BoardVerifiedSource[];
+}) {
+  if (sources.length === 0) {
+    return null;
+  }
+  return (
+    <div className={styles.verifiedSources}>
+      <div>
+        <h4>Linked evidence</h4>
+        <span>
+          {sources.filter((source) => source.status === "VERIFIED").length} of{" "}
+          {sources.length} analyzed
+        </span>
+      </div>
+      <ul>
+        {sources.map((source) => (
+          <li data-status={source.status} key={source.id}>
+            <span aria-hidden="true" />
+            <div>
+              <a
+                href={source.finalUrl ?? source.originalUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {source.title ?? sourceHostname(source.originalUrl)}
+              </a>
+              <small>{source.statusDetail}</small>
+            </div>
+            <strong>{verifiedSourceLabels[source.status]}</strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 async function responseJson<T>(response: Response): Promise<T> {
   const value = (await response.json()) as T & { message?: string };
   if (!response.ok) {
@@ -75,6 +133,7 @@ export function BoardRoom({
   const [snapshot, setSnapshot] = useState<BoardSessionSnapshot | null>(null);
   const [message, setMessage] = useState("");
   const [pendingMessage, setPendingMessage] = useState("");
+  const [pendingLinks, setPendingLinks] = useState<string[]>([]);
   const [allowWebResearch, setAllowWebResearch] = useState(false);
   const [sending, setSending] = useState(false);
   const [reviewingProposal, setReviewingProposal] = useState<string | null>(
@@ -82,6 +141,7 @@ export function BoardRoom({
   );
   const [error, setError] = useState("");
   const transcriptEnd = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
 
   const endpoint = boardEndpoint({
     ideaId,
@@ -118,14 +178,21 @@ export function BoardRoom({
   async function submitMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = message.trim();
-    if (body.length < 2 || sending) {
+    const links = extractBoardLinks(body);
+    if (
+      body.length < 2 ||
+      links.length > maxBoardLinksPerMessage ||
+      sendingRef.current
+    ) {
       return;
     }
 
+    sendingRef.current = true;
     setSending(true);
     setError("");
     setMessage("");
     setPendingMessage(body);
+    setPendingLinks(links);
 
     try {
       const response = await fetch(
@@ -144,15 +211,18 @@ export function BoardRoom({
       );
       setSnapshot(await responseJson<BoardSessionSnapshot>(response));
       setPendingMessage("");
+      setPendingLinks([]);
     } catch (reason) {
       setMessage(body);
       setPendingMessage("");
+      setPendingLinks([]);
       setError(
         reason instanceof Error
           ? reason.message
           : "The board could not complete this turn.",
       );
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }
@@ -192,6 +262,8 @@ export function BoardRoom({
 
   const messages = snapshot?.messages ?? [];
   const loading = snapshot === null && !error;
+  const detectedLinks = extractBoardLinks(message);
+  const hasTooManyLinks = detectedLinks.length > maxBoardLinksPerMessage;
 
   function selectChannel(nextChannel: BoardChannel) {
     setSnapshot(null);
@@ -320,6 +392,7 @@ export function BoardRoom({
                 </p>
               ) : null}
               <p className={styles.boardMessageBody}>{item.body}</p>
+              <VerifiedSourcesList sources={item.verifiedSources} />
               {item.unknownVariables.length > 0 ? (
                 <div className={styles.boardUnknowns}>
                   <h4>Variables that could change the decision</h4>
@@ -410,6 +483,15 @@ export function BoardRoom({
               <span className={styles.boardPendingLabel}>Sending</span>
             </header>
             <p className={styles.boardMessageBody}>{pendingMessage}</p>
+            {pendingLinks.length > 0 ? (
+              <div className={styles.pendingSources} role="status">
+                <span className={styles.boardPulse} aria-hidden="true" />
+                <p>
+                  Opening and analyzing {pendingLinks.length} linked{" "}
+                  {pendingLinks.length === 1 ? "source" : "sources"}…
+                </p>
+              </div>
+            ) : null}
           </article>
         ) : null}
 
@@ -423,7 +505,11 @@ export function BoardRoom({
                   : `${boardSpecialistLabels[specialistRole]} is reviewing the evidence.`}
               </strong>
               <p>
-                {allowWebResearch
+                {pendingLinks.length > 0 && allowWebResearch
+                  ? "The team is verifying your links and searching for additional current evidence."
+                  : pendingLinks.length > 0
+                    ? "The team is verifying the linked evidence before deliberating."
+                    : allowWebResearch
                   ? "The team is also researching current public evidence and will return citations."
                   : "The team is reasoning from the saved research record and the context you provided."}
               </p>
@@ -454,6 +540,35 @@ export function BoardRoom({
           rows={5}
           value={message}
         />
+        {detectedLinks.length > 0 ? (
+          <div
+            className={`${styles.detectedSources} ${
+              hasTooManyLinks ? styles.detectedSourcesError : ""
+            }`}
+            role={hasTooManyLinks ? "alert" : "status"}
+          >
+            <div>
+              <strong>
+                {detectedLinks.length} public{" "}
+                {detectedLinks.length === 1 ? "source" : "sources"} detected
+              </strong>
+              <small>
+                {hasTooManyLinks
+                  ? `Send no more than ${maxBoardLinksPerMessage} links at a time.`
+                  : "Each page will be opened, analyzed, and saved with its retrieval status."}
+              </small>
+            </div>
+            <ul>
+              {detectedLinks.map((link) => (
+                <li key={link}>
+                  <span aria-hidden="true" />
+                  <span>{sourceHostname(link)}</span>
+                  <strong>Ready to verify</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <div className={styles.boardComposerFooter}>
           <label className={styles.researchToggle}>
             <input
@@ -469,7 +584,12 @@ export function BoardRoom({
           </label>
           <div>
             <span>{message.length.toLocaleString()} / 12,000</span>
-            <button disabled={sending || message.trim().length < 2} type="submit">
+            <button
+              disabled={
+                sending || message.trim().length < 2 || hasTooManyLinks
+              }
+              type="submit"
+            >
               {sending ? "Deliberating…" : "Send to board"}
             </button>
           </div>

@@ -15,6 +15,10 @@ import {
   type BoardSessionSnapshot,
   type BoardSpecialistRole,
 } from "@/lib/board-contract";
+import {
+  researchLinksInMessage,
+  type VerifiedLinkResearchResult,
+} from "@/lib/verified-link-research";
 
 type SessionSelector = {
   ideaId: string;
@@ -30,7 +34,12 @@ const messageInclude = {
     },
     orderBy: { createdAt: "asc" },
   },
+  verifiedSources: {
+    orderBy: { createdAt: "asc" },
+  },
 } satisfies Prisma.BoardMessageInclude;
+
+const boardSpecialistRoleSet = new Set(boardSpecialistRoles);
 
 function stringArray(value: Prisma.JsonValue): string[] {
   return Array.isArray(value)
@@ -73,6 +82,17 @@ function serializeMessage(
     ),
     body: message.body,
     citations: citations(message.citations),
+    verifiedSources: message.verifiedSources.map((source) => ({
+      id: source.id,
+      originalUrl: source.originalUrl,
+      finalUrl: source.finalUrl,
+      title: source.title,
+      status: source.status,
+      statusDetail: source.statusDetail,
+      mimeType: source.mimeType,
+      contentHash: source.contentHash,
+      retrievedAt: source.retrievedAt?.toISOString() ?? null,
+    })),
     unknownVariables: stringArray(message.unknownVariables),
     scoreProposals: message.scoreProposals.map((proposal) => ({
       id: proposal.id,
@@ -162,16 +182,18 @@ async function getOrCreateSession(
 export async function getBoardSession(
   selector: SessionSelector,
 ): Promise<BoardSessionSnapshot> {
-  const run = await loadRun(selector);
-  const existing = await prisma.boardSession.findUnique({
-    where: { sessionKey: sessionKey(selector) },
-    include: {
-      messages: {
-        include: messageInclude,
-        orderBy: { createdAt: "asc" },
+  const [run, existing] = await Promise.all([
+    loadRun(selector),
+    prisma.boardSession.findUnique({
+      where: { sessionKey: sessionKey(selector) },
+      include: {
+        messages: {
+          include: messageInclude,
+          orderBy: { createdAt: "asc" },
+        },
       },
-    },
-  });
+    }),
+  ]);
 
   return {
     id: existing?.id ?? null,
@@ -186,6 +208,7 @@ export async function getBoardSession(
 function buildContext(
   run: Awaited<ReturnType<typeof loadRun>>,
   messages: BoardMessage[],
+  verifiedSources: VerifiedLinkResearchResult[],
 ): BoardEvidenceContext {
   return {
     ideaId: run.idea.id,
@@ -226,6 +249,15 @@ function buildContext(
           : message.speakerRole ?? "Board",
       body: message.body,
     })),
+    verifiedSources: verifiedSources.map((source) => ({
+      originalUrl: source.originalUrl,
+      finalUrl: source.finalUrl,
+      title: source.title,
+      status: source.status,
+      statusDetail: source.statusDetail,
+      extractedText: source.extractedText,
+      retrievedAt: source.retrievedAt?.toISOString() ?? null,
+    })),
   };
 }
 
@@ -245,11 +277,27 @@ export async function createBoardTurn({
     throw new Error("Board messages must be between 2 and 12,000 characters.");
   }
 
-  const run = await loadRun(selector);
-  const session = await getOrCreateSession(selector, actorUserId);
-  const before = await getBoardSession(selector);
+  validateSelector(selector);
+  const [run, session, existing, verifiedSources] = await Promise.all([
+    loadRun(selector),
+    getOrCreateSession(selector, actorUserId),
+    prisma.boardSession.findUnique({
+      where: { sessionKey: sessionKey(selector) },
+      include: {
+        messages: {
+          include: messageInclude,
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    }),
+    researchLinksInMessage(trimmedMessage),
+  ]);
 
-  const context = buildContext(run, before.messages);
+  const context = buildContext(
+    run,
+    existing?.messages.map(serializeMessage) ?? [],
+    verifiedSources,
+  );
   const response =
     selector.channel === "DIRECT"
       ? await runDirectSpecialistTurn({
@@ -277,6 +325,19 @@ export async function createBoardTurn({
         contributors: [],
         citations: [],
         unknownVariables: [],
+        verifiedSources: {
+          create: verifiedSources.map((source) => ({
+            originalUrl: source.originalUrl,
+            finalUrl: source.finalUrl,
+            title: source.title,
+            status: source.status,
+            statusDetail: source.statusDetail,
+            mimeType: source.mimeType,
+            contentHash: source.contentHash,
+            extractedText: source.extractedText,
+            retrievedAt: source.retrievedAt,
+          })),
+        },
       },
     });
 
@@ -293,7 +354,7 @@ export async function createBoardTurn({
           selector.channel === "DIRECT"
             ? [selector.specialistRole as BoardSpecialistRole]
             : response.contributors.filter((role) =>
-                boardSpecialistRoles.includes(role),
+                boardSpecialistRoleSet.has(role),
               ),
         citations: response.citations,
         unknownVariables: response.unknownVariables,
@@ -332,6 +393,10 @@ export async function createBoardTurn({
           channel: selector.channel,
           specialistRole: selector.specialistRole,
           webResearch: allowWebResearch,
+          submittedLinkCount: verifiedSources.length,
+          verifiedLinkCount: verifiedSources.filter(
+            (source) => source.status === "VERIFIED",
+          ).length,
           proposalCount: validProposals.length,
         },
       },
