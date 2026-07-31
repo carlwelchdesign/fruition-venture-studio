@@ -123,14 +123,20 @@ must not retain valid credentials.
 4. Seven bounded specialists collect public-source evidence, including a
    structured market-economics and venture-finance assessment.
 5. An eighth agent synthesizes a cited, versioned scorecard.
-6. For selected opportunities, the owner may generate and edit a founder-safe
+6. The private venture board supports moderated and direct-specialist
+   deliberation. Public links pasted into a board message are retrieved through
+   an SSRF-resistant, size-limited pipeline, saved with their retrieval status
+   and content hash, and supplied to the agents as untrusted evidence. Returned
+   citations are retained only when they match saved research, a successfully
+   verified link, or a URL observed in the web-search response.
+7. For selected opportunities, the owner may generate and edit a founder-safe
    Opportunity Brief from completed specialist reports. Internal scores,
    notes, dispositions, and board conversations are excluded.
-7. External brief delivery requires an explicit human review, a separate
+8. External brief delivery requires an explicit human review, a separate
    publish action, and `FOUNDER_BRIEF_PUBLISHING_ENABLED=true` in the admin
    deployment. Published links expire after 90 days and can be revoked or
    reissued.
-8. The owner records the disposition and may override scores with a required
+9. The owner records the disposition and may override scores with a required
    reason.
 
 Agents remain advisory. They cannot contact people, purchase anything, deploy

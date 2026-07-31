@@ -27,6 +27,26 @@ export type BoardCitation = {
   title: string;
 };
 
+export const maxBoardLinksPerMessage = 3;
+
+export type BoardVerifiedSourceStatus =
+  | "VERIFIED"
+  | "BLOCKED"
+  | "UNAVAILABLE"
+  | "UNSUPPORTED";
+
+export type BoardVerifiedSource = {
+  id: string;
+  originalUrl: string;
+  finalUrl: string | null;
+  title: string | null;
+  status: BoardVerifiedSourceStatus;
+  statusDetail: string | null;
+  mimeType: string | null;
+  contentHash: string | null;
+  retrievedAt: string | null;
+};
+
 export type BoardScoreProposal = {
   id: string;
   dimensionKey: string;
@@ -45,10 +65,32 @@ export type BoardMessage = {
   contributors: BoardSpecialistRole[];
   body: string;
   citations: BoardCitation[];
+  verifiedSources: BoardVerifiedSource[];
   unknownVariables: string[];
   scoreProposals: BoardScoreProposal[];
   createdAt: string;
 };
+
+const linkPattern = /https?:\/\/[^\s<>"'`]+/gi;
+const trailingLinkPunctuation = /[),.;:!?]+$/;
+
+export function extractBoardLinks(message: string): string[] {
+  const links = new Set<string>();
+  for (const match of message.match(linkPattern) ?? []) {
+    const candidate = match.replace(trailingLinkPunctuation, "");
+    try {
+      const url = new URL(candidate);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        continue;
+      }
+      url.hash = "";
+      links.add(url.toString());
+    } catch {
+      // Invalid URL-like text remains part of the message, but is not fetched.
+    }
+  }
+  return [...links];
+}
 
 export type BoardSessionSnapshot = {
   id: string | null;

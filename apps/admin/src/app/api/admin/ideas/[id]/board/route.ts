@@ -61,7 +61,8 @@ function publicError(error: unknown) {
   if (
     message.includes("Complete research") ||
     message.includes("Choose a specialist") ||
-    message.includes("Board messages")
+    message.includes("Board messages") ||
+    message.includes("Add no more")
   ) {
     return message;
   }
