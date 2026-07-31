@@ -5,6 +5,7 @@ import { ResearchCommission } from "@/components/admin/research-commission";
 import { IdeaScorecard } from "@/components/admin/idea-scorecard";
 import { IdeaSidebar } from "@/components/admin/idea-sidebar";
 import { VentureFinanceAnalysis } from "@/components/admin/venture-finance-analysis";
+import { BoardRoom } from "@/components/admin/board-room";
 import { ventureFinancialsSchema } from "@/agents/research-schemas";
 import { prisma } from "@fruition/database";
 import styles from "../../../admin.module.css";
@@ -144,12 +145,22 @@ export default async function IdeaPage({
               scorecard={latestRun.scorecard}
             />
           ) : null}
+          {latestRun?.scorecard ? (
+            <BoardRoom
+              ideaId={idea.id}
+              researchRunId={latestRun.id}
+              researchVersion={latestRun.version}
+            />
+          ) : null}
           {financials ? (
-            <VentureFinanceAnalysis financials={financials} />
+            <VentureFinanceAnalysis
+              financials={financials}
+              sectionNumber="05"
+            />
           ) : null}
           <IdeaReports
             reports={latestRun?.reports ?? []}
-            sectionNumber={financials ? "05" : "04"}
+            sectionNumber={financials ? "06" : "05"}
           />
         </div>
 

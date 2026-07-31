@@ -41,18 +41,36 @@ enum IdeaDisposition {
   DECLINE
 }
 
+enum BoardChannel {
+  BOARD
+  DIRECT
+}
+
+enum BoardMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum BoardProposalStatus {
+  PENDING
+  ACCEPTED
+  DISMISSED
+}
+
 model User {
-  id            String    @id
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  auditEvents   AuditEvent[]
-  notes         AdminNote[]
+  id                     String               @id
+  name                   String
+  email                  String               @unique
+  emailVerified          Boolean              @default(false)
+  image                  String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  sessions               Session[]
+  accounts               Account[]
+  auditEvents            AuditEvent[]
+  notes                  AdminNote[]
+  boardSessions          BoardSession[]
+  reviewedBoardProposals BoardScoreProposal[] @relation("BoardProposalReviewer")
 
   @@map("user")
 }
@@ -105,14 +123,14 @@ model Verification {
 }
 
 model Submitter {
-  id              String   @id @default(cuid())
-  normalizedEmail String   @unique
+  id              String    @id @default(cuid())
+  normalizedEmail String    @unique
   email           String
   name            String
   organization    String?
   anonymizedAt    DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   ideas           Idea[]
 
   @@index([createdAt])
@@ -136,6 +154,7 @@ model Idea {
   submitter       Submitter        @relation(fields: [submitterId], references: [id], onDelete: Cascade)
   researchRuns    ResearchRun[]
   notes           AdminNote[]
+  boardSessions   BoardSession[]
 
   @@index([submitterId, createdAt])
   @@index([status, createdAt])
@@ -156,25 +175,26 @@ model ResearchRun {
   idea          Idea              @relation(fields: [ideaId], references: [id], onDelete: Cascade)
   reports       AgentReport[]
   scorecard     Scorecard?
+  boardSessions BoardSession[]
 
   @@unique([ideaId, version])
   @@index([ideaId, status])
 }
 
 model AgentReport {
-  id               String           @id @default(cuid())
-  researchRunId    String
-  role             AgentRole
-  title            String
-  summary          String
-  findings         Json
-  risks            Json
-  openQuestions    Json
-  structuredData   Json?
-  confidence       Float
-  createdAt        DateTime         @default(now())
-  researchRun      ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
-  sources          ResearchSource[]
+  id             String           @id @default(cuid())
+  researchRunId  String
+  role           AgentRole
+  title          String
+  summary        String
+  findings       Json
+  risks          Json
+  openQuestions  Json
+  structuredData Json?
+  confidence     Float
+  createdAt      DateTime         @default(now())
+  researchRun    ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
+  sources        ResearchSource[]
 
   @@unique([researchRunId, role])
 }
@@ -193,34 +213,89 @@ model ResearchSource {
 }
 
 model Scorecard {
-  id              String           @id @default(cuid())
-  researchRunId   String           @unique
-  totalScore      Float
+  id             String           @id @default(cuid())
+  researchRunId  String           @unique
+  totalScore     Float
   recommendation IdeaDisposition
-  confidence      Float
-  summary         String
-  nextSteps       Json
-  createdAt       DateTime         @default(now())
-  researchRun     ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
-  dimensions      ScoreDimension[]
+  confidence     Float
+  summary        String
+  nextSteps      Json
+  createdAt      DateTime         @default(now())
+  researchRun    ResearchRun      @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
+  dimensions     ScoreDimension[]
 }
 
 model ScoreDimension {
-  id              String    @id @default(cuid())
-  scorecardId     String
-  key             String
-  label           String
-  weight          Float
-  aiScore         Float
-  aiRationale     String
-  confidence      Float
-  evidence        Json
-  overrideScore   Float?
-  overrideReason  String?
-  overriddenAt    DateTime?
-  scorecard       Scorecard @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  id             String               @id @default(cuid())
+  scorecardId    String
+  key            String
+  label          String
+  weight         Float
+  aiScore        Float
+  aiRationale    String
+  confidence     Float
+  evidence       Json
+  overrideScore  Float?
+  overrideReason String?
+  overriddenAt   DateTime?
+  scorecard      Scorecard            @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  boardProposals BoardScoreProposal[]
 
   @@unique([scorecardId, key])
+}
+
+model BoardSession {
+  id             String         @id @default(cuid())
+  sessionKey     String         @unique
+  ideaId         String
+  researchRunId  String
+  createdById    String
+  channel        BoardChannel
+  specialistRole AgentRole?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  idea           Idea           @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  researchRun    ResearchRun    @relation(fields: [researchRunId], references: [id], onDelete: Cascade)
+  createdBy      User           @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  messages       BoardMessage[]
+
+  @@index([ideaId, updatedAt])
+  @@index([researchRunId, channel])
+}
+
+model BoardMessage {
+  id               String               @id @default(cuid())
+  boardSessionId   String
+  role             BoardMessageRole
+  speakerRole      AgentRole?
+  body             String
+  contributors     Json
+  citations        Json
+  unknownVariables Json
+  createdAt        DateTime             @default(now())
+  boardSession     BoardSession         @relation(fields: [boardSessionId], references: [id], onDelete: Cascade)
+  scoreProposals   BoardScoreProposal[]
+
+  @@index([boardSessionId, createdAt])
+}
+
+model BoardScoreProposal {
+  id               String              @id @default(cuid())
+  boardMessageId   String
+  scoreDimensionId String
+  proposedScore    Float
+  rationale        String
+  evidence         Json
+  status           BoardProposalStatus @default(PENDING)
+  reviewedById     String?
+  reviewedAt       DateTime?
+  createdAt        DateTime            @default(now())
+  boardMessage     BoardMessage        @relation(fields: [boardMessageId], references: [id], onDelete: Cascade)
+  scoreDimension   ScoreDimension      @relation(fields: [scoreDimensionId], references: [id], onDelete: Cascade)
+  reviewedBy       User?               @relation("BoardProposalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([boardMessageId])
+  @@index([scoreDimensionId, status])
 }
 
 model AdminNote {
